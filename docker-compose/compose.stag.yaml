@@ -1,0 +1,73 @@
+version: "1.0"
+services:
+  frontend:
+    container_name: frontend-sispedon
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.stag
+    image: frontend-sispedon:1.0
+    # working_dir: /app
+    ports:
+      - 5173:5173
+    volumes:
+      # jika ingin menginstall dependencies baru maka comment dlu /app/node modules lalu nyalakan lagi dengan up -d setelah --build
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true # agar Vite bisa watch dengan polling
+    depends_on:
+      - backend
+    # - nginx
+
+  backend:
+    container_name: backend-sispedon
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: backend-sispedon:1.0
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../backend:/app/backend
+      - uploads_data:/app/backend/uploads
+    working_dir: /app/backend
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=main.py
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    expose:
+      - 5000
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:13
+    container_name: postgres-sispedon
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data_sispedon:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pg_admin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: sispedon@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: Sisped0nAdmin2025
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+volumes:
+  postgres_data_sispedon:
+  uploads_data:
+  # nginx:
+  #   image: nginx:latest
+  #   container_name: nginx_proxy
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - backend

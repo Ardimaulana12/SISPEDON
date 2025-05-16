@@ -1,0 +1,16 @@
+flask
+# Pillow
+# opencv-python-headless
+flask_cors
+Flask-SQLAlchemy #new
+psycopg2-binary #new
+Flask-Mail #new
+Flask-Migrate
+python-dotenv
+Flask-Bcrypt
+flask-jwt-extended
+requests
+numpy<2
+gunicorn
+openpyxl
+pandas

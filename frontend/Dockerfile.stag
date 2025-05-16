@@ -1,0 +1,11 @@
+FROM  node:iron-alpine3.21
+# COPY . /app
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN apk update && apk upgrade
+RUN npm install -g pnpm
+RUN pnpm install
+COPY . .
+EXPOSE 5173
+CMD ["pnpm" ,"run","dev"]
+# CMD ["sh", "-c", "pnpm install && pnpm run dev"]
