@@ -1,0 +1,5 @@
+migrations/
+__pycache__/
+form.py
+generate_key.py
+testing/
