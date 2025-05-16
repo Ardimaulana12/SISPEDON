@@ -54,6 +54,14 @@ To stop and remove all running containers:
 docker compose -f docker-compose/compose.stag.yaml down
 ```
 
+## 🐰 Start the App Again
+
+**If You Want To Run App Again You Can Just Run**
+
+```bash
+docker compose -f docker-compose/compose.stag.yaml up -d
+```
+
 ---
 
 ## 📌 Notes
