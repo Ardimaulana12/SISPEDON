@@ -29,7 +29,7 @@ def get_student_evaluation_history():
         return jsonify({"message": "Student not found"}), 404
     
     # Debug info
-    print(f"Student found: {student.nim}, {student.name}")
+    # print(f"Student found: {student.nim}, {student.name}")
     
     try:
         # Get all evaluations submitted by the student
@@ -59,7 +59,7 @@ def get_student_evaluation_history():
             eval_obj, lecturer_name, course_name, cl_semester, cl_academic_year = eval_data
             
             # Debug info
-            print(f"Evaluation ID: {eval_obj.id}, Score: {eval_obj.score}, Comment: {eval_obj.comment}")
+            # print(f"Evaluation ID: {eval_obj.id}, Score: {eval_obj.score}, Comment: {eval_obj.comment}")
             
             # Get lecturer and course directly from relationships if available
             lecturer = Lecturer.query.get(eval_obj.lecturer_id) if eval_obj.lecturer_id else None
@@ -68,8 +68,8 @@ def get_student_evaluation_history():
             # Format dates for both raw (ISO) and display formats
             created_at_raw = eval_obj.created_at.isoformat() if eval_obj.created_at else None
             updated_at_raw = eval_obj.updated_at.isoformat() if eval_obj.updated_at else None
-            created_at_formatted = eval_obj.created_at.strftime('%d %B %Y pukul %H.%M WIB') if eval_obj.created_at else None
-            updated_at_formatted = eval_obj.updated_at.strftime('%d %B %Y pukul %H.%M WIB') if eval_obj.updated_at else None
+            created_at_formatted = eval_obj.created_at.strftime('%d %B %Y pukul %H:%M WIB') if eval_obj.created_at else None
+            updated_at_formatted = eval_obj.updated_at.strftime('%d %B %Y pukul %H:%M WIB') if eval_obj.updated_at else None
             
             result.append({
                 'id': eval_obj.id,
@@ -257,8 +257,8 @@ def get_evaluation_detail(evaluation_id):
         # Format dates for both raw (ISO) and display formats
         created_at_raw = eval_obj.created_at.isoformat() if eval_obj.created_at else None
         updated_at_raw = eval_obj.updated_at.isoformat() if eval_obj.updated_at else None
-        created_at_formatted = eval_obj.created_at.strftime('%d %B %Y pukul %H.%M WIB') if eval_obj.created_at else None
-        updated_at_formatted = eval_obj.updated_at.strftime('%d %B %Y pukul %H.%M WIB') if eval_obj.updated_at else None
+        created_at_formatted = eval_obj.created_at.strftime('%d %B %Y pukul %H:%M WIB') if eval_obj.created_at else None
+        updated_at_formatted = eval_obj.updated_at.strftime('%d %B %Y pukul %H:%M WIB') if eval_obj.updated_at else None
         
         result = {
             'id': eval_obj.id,
@@ -362,14 +362,14 @@ def update_evaluation(evaluation_id):
                 max_possible_points = answer_count * max_points_per_question
                 score = (total_points / max_possible_points) * 100
                 
-                print(f"Score calculation: {total_points} / ({answer_count} * {max_points_per_question}) * 100 = {score}%")
+                # print(f"Score calculation: {total_points} / ({answer_count} * {max_points_per_question}) * 100 = {score}%")
                 
                 # Ensure score is capped at 100%
                 score = min(score, 100.0)
                 
                 # Update the evaluation score
                 evaluation.score = score
-                print(f"Updated evaluation {evaluation.id} score to {score}%")
+                # print(f"Updated evaluation {evaluation.id} score to {score}%")
         
         # Update comment if provided
         if 'comment' in data:
@@ -387,7 +387,7 @@ def update_evaluation(evaluation_id):
         if lecturer_id:
             from App.models import update_lecturer_score
             update_success = update_lecturer_score(lecturer_id)
-            print(f"Leaderboard update for lecturer {lecturer_id}: {'Success' if update_success else 'Failed'}")
+            # print(f"Leaderboard update for lecturer {lecturer_id}: {'Success' if update_success else 'Failed'}")
         
         # Return the updated score along with the success message
         return jsonify({

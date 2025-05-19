@@ -127,7 +127,6 @@ const Form = () => {
         comment 
       };
       
-      console.log('Sending payload:', payload);
       
       // Jika evaluation_id ada, berarti ini mode edit
       if (evaluation_id) {
@@ -142,7 +141,6 @@ const Form = () => {
           }
         );
         
-        console.log('Update response:', response.data);
         
         // Show the updated score if available
         if (response.data && response.data.score) {
@@ -165,8 +163,6 @@ const Form = () => {
             },
           }
         );
-        
-        console.log('Evaluation submitted:', response.data);
         
         // Show score if available
         if (response.data && response.data.score) {
@@ -303,7 +299,7 @@ const Form = () => {
               className={`px-6 py-3 rounded-lg text-white font-medium flex items-center shadow-sm ${
                 !isFormValid || isSubmitting
                   ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-teal-500 to-green-500 cursor-pointer hover:from-teal-600 hover:to-green-600'
+                  : 'bg-gradient-to-r from-gray-800 to-black cursor-pointer hover:from-gray-600 hover:to-black'
               }`}
             >
               {isSubmitting ? (

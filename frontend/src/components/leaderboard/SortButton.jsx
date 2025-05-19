@@ -4,9 +4,9 @@ import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 const SortButton = ({ columnKey, sortConfig, onSort }) => {
   // Check if this column is currently being sorted
-  const isActive = sortConfig.key === columnKey;
+  const isActive = sortConfig?.key === columnKey;
   const getIcon = () => {
-    if (sortConfig.key !== columnKey) {
+    if (!sortConfig || sortConfig.key !== columnKey) {
       return (
         <motion.span 
           whileHover={{ scale: 1.2 }}

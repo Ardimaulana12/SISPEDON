@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../components/AuthProvider';
+import Loading from '../components/Loading';
 import { toast } from 'react-toastify';
 import { FaUser, FaEnvelope, FaIdCard, FaGraduationCap } from 'react-icons/fa';
-import { useAuth } from '../components/AuthProvider';
 
 const Profile = () => {
   const [userData, setUserData] = useState(null);
@@ -32,7 +33,6 @@ const Profile = () => {
         const response = await axios.get(`${apiUrl}/api/profile`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        console.log(response.data);
         setUserData(response.data);
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -50,7 +50,7 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        <Loading />
       </div>
     );
   }

@@ -129,6 +129,7 @@ const LeaderboardRow = ({ lecturer, rank, positionChange }) => {
           {renderPositionIndicator()}
         </div>
       </td>
+
       <td className="p-3 text-center">
         <div className="flex items-center justify-center">
           <span className="font-medium">

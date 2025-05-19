@@ -1,10 +1,12 @@
 from flask_jwt_extended import jwt_required, get_jwt
 from flask import Blueprint, jsonify, request
 from App.models import Lecturer, LecturerScore, Evaluation, db
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, case, literal
 from datetime import datetime, timedelta
 
 leaderboard_bp = Blueprint('leaderboard', __name__)
+
+# Route update-bayesian dihapus karena tidak lagi menggunakan weighted_score
 
 @leaderboard_bp.route('/api/leaderboard/export', methods=['GET'])
 @jwt_required()
@@ -105,7 +107,7 @@ def export_leaderboard():
                 LecturerScore.score_count
             )
     
-    # Urutkan berdasarkan skor rata-rata (tertinggi ke terendah)
+    # Urutkan berdasarkan average_score
     lecturers = query.order_by(desc('average_score')).all()
     
     # Format hasil

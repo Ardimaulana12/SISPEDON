@@ -31,7 +31,6 @@ const LecturerList = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setLecturers(response.data);
-      console.log(response.data)
       setError(null);
     } catch (err) {
       console.error('Error fetching lecturers:', err);

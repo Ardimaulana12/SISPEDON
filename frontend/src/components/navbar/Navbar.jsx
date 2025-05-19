@@ -103,7 +103,7 @@ const Navbar = () => {
                                     onClick={confirmLogout}
                                     className="px-4 cursor-pointer py-2 bg-gradient-to-r from-rose-500 to-red-500 text-white rounded-md hover:from-rose-600 hover:to-red-600 transition-colors"
                                 >
-                                     Logout
+                                    Logout
                                 </button>
                             </div>
                         </motion.div>

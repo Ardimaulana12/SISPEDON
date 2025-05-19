@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-// import image from '../../components/Taru-new/assets/greenpadi.jpg';
 import {GoogleOAuthProvider, GoogleLogin} from '@react-oauth/google';
 import { useNavigate, NavLink } from 'react-router-dom';
 import {LoginLoading} from './Loading';
@@ -19,7 +18,7 @@ const AnimatedBackground = styled(motion.div)`
   height: 100%;
   z-index: -1;
   overflow: hidden;
-  background: linear-gradient(45deg, #11998e, #38ef7d);
+  background:  linear-gradient(45deg, #11998e, #38ef7d);
 `;
 
 const Ball = styled(motion.div)`
@@ -146,7 +145,7 @@ function Login() {
                         transition={{ duration: 0.5, delay: 0.2 }}
                     >
                         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                            Sign in to SISPENDON
+                            Sign in to SISPEDON
                         </h2>
                     </motion.div>
                     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -221,10 +220,7 @@ function Login() {
                             >
                                 {isLoading ? (
                                     <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
+                                        <LoginLoading />
                                     </span>
                                 ) : null}
                                 {isLoading ? 'Signing in...' : 'Sign in'}

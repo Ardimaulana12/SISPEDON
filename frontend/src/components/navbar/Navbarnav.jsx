@@ -78,22 +78,22 @@ const Navbarnav = ({path =[] ,Logout} ) => {
 
     return (
         <>
-        <nav className='relative w-full bg-gradient-to-r from-green-500 to-teal-500 top-0 left-0 right-0 z-10 shadow-md'>
+        <nav className='relative w-full bg-gradient-to-r from-gray-800 to-black top-0 left-0 right-0 z-10 shadow-md'>
             <div className='relative flex items-center justify-between p-4 max-lg:py-4 max-lg:pr-0 max-lg:pl-2'>
                 {/* Logo - Hidden on mobile */}
-                <ul className="flex z-50 items-center text-white font-poppins font-bold text-[16pt] gap-2 md:flex max-md:hidden">
+                <ul className="flex z-50 items-center text-white font-poppins font-bold text-[16pt] gap-2 md: md:flex max-md:hidden">
                     {/* <img src={image} alt="" className="max-w-10" /> */}
-                    <li>
+                    <li className="md:ml-14">
                         SISPEDON
                     </li>
                 </ul>
 
                 {/* Mobile profile and logo */}
                 {isAuthenticated ? (
-                    <div className="relative z-50 md:hidden" ref={dropdownRef}>
+                    <div className="relative z-99 md:hidden" ref={dropdownRef}>
                         <button 
                             onClick={toggleDropdown}
-                            className="flex items-center cursor-pointer space-x-2 text-white bg-green-500 hover:bg-green-600 transition-colors rounded-full p-1 mr-8 md:hidden"
+                            className="flex items-center cursor-pointer space-x-2 text-white bg-gray-700 hover:bg-gray-800 transition-colors rounded-full p-1 mr-8 md:hidden"
                         >
                             <div className="w-9 h-9 rounded-full bg-gradient-to-r from-green-500 to-teal-400 text-white flex items-center justify-center font-bold shadow-md border-2 border-white">
                                 {getInitials(userName || name)}
@@ -101,14 +101,14 @@ const Navbarnav = ({path =[] ,Logout} ) => {
                         </button>
                         
                         {isDropdownOpen && (
-                            <div className="absolute md:hidden left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-green-200">
+                            <div className="absolute md:hidden left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-99 border border-green-200">
                                 <NavLink to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 transition-colors">
                                     <FaUser className="inline mr-2 text-green-500" /> Lihat Profile
                                 </NavLink>
                                 <NavLink to="/change-password" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 transition-colors">
                                     <FaKey className="inline mr-2 text-green-500" /> Ganti Password
                                 </NavLink>
-                                <button onClick={Logout} className="block cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                <button onClick={Logout} className="block hover:black cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
                                     <FaSignOutAlt className="inline mr-2" /> Logout
                                 </button>
                             </div>
@@ -136,7 +136,7 @@ const Navbarnav = ({path =[] ,Logout} ) => {
                     ))}
                 </ul>
                 {isAuthenticated ? (
-                    <div className="relative hidden md:block" ref={dropdownRef}>
+                    <div className="relative hidden md:block md:mr-8" ref={dropdownRef}>
                         <button 
                             onClick={toggleDropdown}
                             className="flex items-center cursor-pointer space-x-2 text-white bg-green-500 hover:bg-green-600 transition-colors rounded-full p-1 mr-8 max-md:hidden"
@@ -174,7 +174,7 @@ const Navbarnav = ({path =[] ,Logout} ) => {
                 </div>
 
                 {/* Menu mobile yang slide-in from top */}
-                <div className={`absolute -top-1 bg-gradient-to-br from-green-600 to-teal-600 left-0 w-full border-white border-b-2 rounded-b-lg text-white transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-y-0' : '-translate-y-full'} md:hidden shadow-lg`}>
+                <div className={`absolute -top-1 bg-gradient-to-br from-gray-800 to-black left-0 w-full border-white border-b-2 rounded-b-lg text-white transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-y-0' : '-translate-y-full'} md:hidden shadow-lg`}>
                     <ul className="flex flex-col items-center list-none space-y-3 text-xl max-md:mt-16 mb-8">
                         {/* Mobile menu header */}
                         {/* <li className="text-white font-bold text-2xl mb-4 border-b border-green-400 pb-2 w-full text-center">
@@ -188,8 +188,8 @@ const Navbarnav = ({path =[] ,Logout} ) => {
                                     onClick={toggleMenu}
                                     className={({ isActive }) =>
                                     isActive 
-                                        ? "nav-link font-extrabold bg-green-700 block py-2 rounded-md w-full" 
-                                        : "nav-link block py-2 hover:bg-green-700 rounded-md w-full transition-colors"
+                                        ? "nav-link font-extrabold bg-gray-700 block py-2 rounded-md w-full" 
+                                        : "nav-link block py-2 hover:bg-gray-700 rounded-md w-full transition-colors"
                                     }
                                 >
                                     {item.label}
@@ -197,7 +197,7 @@ const Navbarnav = ({path =[] ,Logout} ) => {
                             </li>
                         ))}
                         <div className="flex items-center justify-center space-x-3 p-3 rounded-lg w-full mt-2">
-                            {/* <div className="w-14 h-14 rounded-full bg-gradient-to-r from-green-400 to-teal-300 text-white flex items-center justify-center font-bold text-xl shadow-md border-2 border-white">
+                            {/* <div className="w-14 h-14 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 text-white flex items-center justify-center font-bold text-xl shadow-md border-2 border-white">
                                 {getInitials(userName)}
                             </div> */}
                             <p className="text-white font-bold text-xl">SISPEDON</p>

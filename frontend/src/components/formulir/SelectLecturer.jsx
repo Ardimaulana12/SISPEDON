@@ -94,7 +94,7 @@ const SelectLecturer = () => {
                 
                 <button
                   onClick={() => handleSelect(lecturer)}
-                  className="w-full cursor-pointer bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center"
+                  className="w-full cursor-pointer bg-black text-white py-2 px-4 rounded-md hover:bg-gray-900 transition-colors duration-300 flex items-center justify-center"
                 >
                   <span>Isi Form Penilaian</span>
                   <svg

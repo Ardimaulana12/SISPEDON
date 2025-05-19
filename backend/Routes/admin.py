@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file
-from App.models import db, User, Student, Class, Lecturer, LecturerScore, Evaluation
+from App.models import db, User, Student, Class, Lecturer, LecturerScore, Evaluation, EvaluationAnswer
 from utils.auth import admin_required, generate_password_hash
 import os
 from werkzeug.utils import secure_filename
@@ -8,14 +8,33 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 import pandas as pd
 from datetime import datetime, timedelta
 import tempfile
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, asc
 
 student_bp = Blueprint('student_bp', __name__)
 admin_bp = Blueprint('admin_bp', __name__)
+class_bp = Blueprint('class_bp', __name__)
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads/lecturers'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+# Get all classes for dropdown
+@student_bp.route('/admin/classes-dropdown', methods=['GET'])
+@admin_required
+def get_classes_dropdown(current_user):
+    try:
+        classes = Class.query.order_by(asc(Class.semester), asc(Class.name)).all()
+        result = [{
+            'id': c.id,
+            'name': c.name,
+            'semester': c.semester,
+            'academic_year': c.academic_year,
+            'display_name': f"{c.name} (Semester {c.semester})"
+        } for c in classes]
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -40,11 +59,27 @@ def create_student(current_user):
             nim=data['nim'],
             name=data['name'],
             user_id=new_user.id,
-            class_id=int(data['class_id'])        )
+            class_id=int(data['class_id'])
+        )
         db.session.add(new_student)
         db.session.commit()
+        
+        # Get the class information
+        class_info = Class.query.get(int(data['class_id']))
+        class_name = class_info.name if class_info else None
+        semester = class_info.semester if class_info else None
 
-        return jsonify({'message': 'Student created successfully'}), 201
+        return jsonify({
+            'message': 'Student created successfully',
+            'student': {
+                'nim': new_student.nim,
+                'name': new_student.name,
+                'email': new_user.email,
+                'class_id': new_student.class_id,
+                'class_name': class_name,
+                'semester': semester
+            }
+        }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
@@ -60,6 +95,8 @@ def get_students(current_user):
             'nim': s.nim,
             'name': s.name,
             'class': s.class_.name if s.class_ else None,
+            'class_id': s.class_id,
+            'semester': s.class_.semester if s.class_ else None,
             'email': s.user.email if s.user else None
         })
     return jsonify(result)
@@ -72,11 +109,23 @@ def get_student(current_user, nim):
     if not student:
         return jsonify({'message': 'Student not found'}), 404
     
+    # Get all available classes for dropdown
+    classes = Class.query.order_by(asc(Class.semester), asc(Class.name)).all()
+    class_options = [{
+        'id': c.id,
+        'name': c.name,
+        'semester': c.semester,
+        'academic_year': c.academic_year
+    } for c in classes]
+    
     return jsonify({
         'nim': student.nim,
         'name': student.name,
         'email': student.user.email if student.user else None,
-        'class_id': student.class_id
+        'class_id': student.class_id,
+        'class_name': student.class_.name if student.class_ else None,
+        'semester': student.class_.semester if student.class_ else None,
+        'class_options': class_options
     })
 
 # UPDATE student
@@ -93,10 +142,16 @@ def update_student(current_user, nim):
         student.class_id = data.get('class_id', student.class_id)
         if 'email' in data:
             student.user.email = data['email']
+            student.user.username = data['email']  # Update username too if email changes
         if 'password' in data:
             student.user.password = generate_password_hash(data['password'])
 
         db.session.commit()
+        
+        # Get the class information
+        class_info = Class.query.get(student.class_id)
+        class_name = class_info.name if class_info else None
+        semester = class_info.semester if class_info else None
         
         return jsonify({
             'message': 'Student updated successfully',
@@ -104,7 +159,9 @@ def update_student(current_user, nim):
                 'nim': student.nim,
                 'name': student.name,
                 'email': student.user.email if student.user else None,
-                'class_id': student.class_id
+                'class_id': student.class_id,
+                'class_name': class_name,
+                'semester': semester
             }
         })
     except Exception as e:
@@ -258,33 +315,136 @@ def update_lecturer(current_user, nidn):
 @student_bp.route('/admin/lecturers/<int:nidn>', methods=['DELETE'])
 @admin_required
 def delete_lecturer(current_user, nidn):
+    print(f"===== MULAI PROSES PENGHAPUSAN DOSEN NIDN: {nidn} =====")
+    
+    # Cek apakah dosen ada
     lecturer = Lecturer.query.get(nidn)
     if not lecturer:
-        return jsonify({'message': 'Lecturer not found'}), 404
+        print(f"Dosen dengan NIDN {nidn} tidak ditemukan")
+        return jsonify({'message': 'Dosen tidak ditemukan'}), 404
 
     try:
-        # Delete photo if exists
-        if lecturer.photo_url:
-            photo_path = os.path.join('uploads', lecturer.photo_url.lstrip('/'))
-            if os.path.exists(photo_path):
-                os.remove(photo_path)
-
+        # Simpan data dosen untuk respons
         lecturer_data = {
             'nidn': lecturer.nidn,
             'name': lecturer.name,
             'photo_url': lecturer.photo_url
         }
         
-        db.session.delete(lecturer)
+        # Gunakan pendekatan yang sama persis dengan script SQL yang berhasil
+        # Jalankan SQL dalam satu transaksi
+        
+        # Langkah 1: Hapus jawaban evaluasi terkait dosen
+        print("Langkah 1: Hapus jawaban evaluasi terkait dosen")
+        db.session.execute("""
+            DELETE FROM evaluation_answers 
+            WHERE evaluation_id IN (
+                SELECT id FROM evaluations WHERE lecturer_id = :nidn
+            )
+        """, {"nidn": nidn})
+        db.session.flush()
+        
+        # Langkah 2: Hapus evaluasi terkait dosen
+        print("Langkah 2: Hapus evaluasi terkait dosen")
+        db.session.execute("""
+            DELETE FROM evaluations 
+            WHERE lecturer_id = :nidn
+        """, {"nidn": nidn})
+        db.session.flush()
+        
+        # Langkah 3: Hapus skor dosen
+        print("Langkah 3: Hapus skor dosen")
+        db.session.execute("""
+            DELETE FROM lecturer_scores 
+            WHERE lecturer_id = :nidn
+        """, {"nidn": nidn})
+        db.session.flush()
+        
+        # Langkah 4: Hapus penugasan mengajar
+        print("Langkah 4: Hapus penugasan mengajar")
+        db.session.execute("""
+            DELETE FROM class_lecturers 
+            WHERE lecturer_id = :nidn
+        """, {"nidn": nidn})
+        db.session.flush()
+        
+        # Langkah 5: Hapus foto dosen jika ada
+        if lecturer.photo_url:
+            try:
+                photo_path = os.path.join('uploads', lecturer.photo_url.lstrip('/'))
+                if os.path.exists(photo_path):
+                    os.remove(photo_path)
+                    print(f"Berhasil menghapus foto dosen: {photo_path}")
+            except Exception as e_photo:
+                print(f"Error saat menghapus foto dosen: {str(e_photo)}")
+                # Lanjutkan meskipun gagal menghapus foto
+        
+        # Langkah 6: Akhirnya hapus dosen
+        print("Langkah 6: Hapus dosen")
+        db.session.execute("""
+            DELETE FROM lecturers 
+            WHERE nidn = :nidn
+        """, {"nidn": nidn})
+        
+        # Commit semua perubahan
         db.session.commit()
+        print(f"===== BERHASIL MENGHAPUS DOSEN NIDN: {nidn} =====")
         
         return jsonify({
-            'message': 'Lecturer deleted successfully',
+            'message': 'Dosen berhasil dihapus',
             'deleted_lecturer': lecturer_data
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 400
+        # Tampilkan pesan error yang lebih detail untuk debugging
+        error_message = str(e)
+        error_type = type(e).__name__
+        import traceback
+        traceback_str = traceback.format_exc()
+        print(f"===== ERROR SAAT MENGHAPUS DOSEN NIDN: {nidn} =====")
+        print(f"Tipe error: {error_type}")
+        print(f"Pesan error: {error_message}")
+        print(f"Traceback: {traceback_str}")
+        
+        # Coba pendekatan alternatif dengan menggunakan connection langsung
+        try:
+            print("Mencoba pendekatan alternatif dengan connection langsung...")
+            # Dapatkan connection langsung ke database
+            connection = db.engine.raw_connection()
+            cursor = connection.cursor()
+            
+            # Matikan foreign key constraints sementara
+            cursor.execute("SET CONSTRAINTS ALL DEFERRED")
+            
+            # Jalankan query penghapusan dalam urutan yang sama
+            cursor.execute("""
+                DELETE FROM evaluation_answers 
+                WHERE evaluation_id IN (
+                    SELECT id FROM evaluations WHERE lecturer_id = %s
+                )
+            """, (nidn,))
+            
+            cursor.execute("DELETE FROM evaluations WHERE lecturer_id = %s", (nidn,))
+            cursor.execute("DELETE FROM lecturer_scores WHERE lecturer_id = %s", (nidn,))
+            cursor.execute("DELETE FROM class_lecturers WHERE lecturer_id = %s", (nidn,))
+            cursor.execute("DELETE FROM lecturers WHERE nidn = %s", (nidn,))
+            
+            # Commit perubahan
+            connection.commit()
+            cursor.close()
+            connection.close()
+            
+            print("Berhasil menghapus dosen dengan pendekatan alternatif")
+            
+            return jsonify({
+                'message': 'Dosen berhasil dihapus',
+                'deleted_lecturer': lecturer_data
+            })
+        except Exception as e_alt:
+            print(f"Pendekatan alternatif juga gagal: {str(e_alt)}")
+            return jsonify({
+                'error': f"Gagal menghapus dosen: {error_message}"
+            }), 400
 
 
 # Export leaderboard as XLSX

@@ -1,10 +1,64 @@
 from flask_jwt_extended import jwt_required, get_jwt,get_jwt_identity
 from flask import Blueprint, jsonify, request
-from App.models import Lecturer, ClassLecturer, db, Student, LecturerScore, Evaluation, Course
+from App.models import Lecturer, ClassLecturer, db, Student, LecturerScore, Evaluation, Course, EvaluationAnswer
 from sqlalchemy import desc, func
 from datetime import datetime, timedelta
 
 lecturer_bp = Blueprint('lecturer', __name__)
+
+# Helper function to update lecturer scores (only average score, no weighted score)
+def update_lecturer_scores():
+    """Update average scores for all lecturers"""
+    try:
+        # Get count of evaluations per lecturer and their average scores
+        lecturer_data = db.session.query(
+            Evaluation.lecturer_id,
+            func.avg(Evaluation.score).label('avg_score'),
+            func.count(Evaluation.id).label('voter_count')
+        ).group_by(Evaluation.lecturer_id).all()
+        
+        # Update scores for lecturers with evaluations
+        for lecturer_id, avg_score, voter_count in lecturer_data:
+            # Cap average score at 100%
+            average_score = min(100, avg_score) if avg_score is not None else 0
+            
+            # Update or create LecturerScore record
+            lecturer_score = LecturerScore.query.get(lecturer_id)
+            if lecturer_score:
+                lecturer_score.average_score = average_score
+                lecturer_score.score_count = voter_count
+            else:
+                lecturer_score = LecturerScore(
+                    lecturer_id=lecturer_id,
+                    average_score=average_score,
+                    score_count=voter_count
+                )
+                db.session.add(lecturer_score)
+        
+        # For lecturers without evaluations, set average_score to 0
+        all_lecturers = Lecturer.query.all()
+        for lecturer in all_lecturers:
+            if lecturer.nidn not in [ld[0] for ld in lecturer_data]:
+                lecturer_score = LecturerScore.query.get(lecturer.nidn)
+                if lecturer_score:
+                    lecturer_score.average_score = 0
+                    lecturer_score.score_count = 0
+                else:
+                    lecturer_score = LecturerScore(
+                        lecturer_id=lecturer.nidn,
+                        average_score=0,
+                        score_count=0
+                    )
+                    db.session.add(lecturer_score)
+        
+        db.session.commit()
+        return True
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating lecturer scores: {str(e)}")
+        return False
+
 # just get my lecturers
 @lecturer_bp.route('/api/my-lecturers')
 @jwt_required()
@@ -16,6 +70,9 @@ def get_my_lecturers():
         student = Student.query.filter_by(nim=get_jwt_identity()).first()
         if not student:
             return jsonify([])
+    
+    # Update average scores before returning the data
+    update_lecturer_scores()
         
     # Jika role adalah student, maka filter berdasarkan class_id mahasiswa
     if student:
@@ -76,6 +133,9 @@ def get_lecturers():
 
     if role not in ['student', 'admin']:
         return jsonify({'message': 'Unauthorized'}), 403
+    
+    # Update average scores before returning the data
+    update_lecturer_scores()
 
     lecturers = db.session.query(
         Lecturer.nidn,
@@ -100,6 +160,8 @@ def get_lecturers():
 # get all of lecturers for all even stranger
 @lecturer_bp.route('/lecturers/all', methods=['GET'])
 def get_all_lecturers():
+    # Update average scores before returning the data
+    update_lecturer_scores()
 
     lecturers = db.session.query(
         Lecturer.nidn,

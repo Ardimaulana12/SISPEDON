@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from App.models import db, ClassLecturer, Lecturer, Class, Course
+from App.models import db, ClassLecturer, Lecturer, Class, Course, Evaluation, EvaluationAnswer
 from flask_jwt_extended import jwt_required
 from utils.auth import admin_required
 
@@ -229,6 +229,18 @@ def delete_teaching_assignment(current_user, assignment_id):
         if not assignment:
             return jsonify({'error': 'Teaching assignment not found'}), 404
         
+        # Find all evaluations that reference this teaching assignment
+        evaluations = Evaluation.query.filter_by(lecturer_class_id=assignment_id).all()
+        
+        # For each evaluation, delete related evaluation answers first
+        for evaluation in evaluations:
+            # Delete evaluation answers
+            EvaluationAnswer.query.filter_by(evaluation_id=evaluation.id).delete()
+        
+        # Now delete all evaluations for this teaching assignment
+        Evaluation.query.filter_by(lecturer_class_id=assignment_id).delete()
+        
+        # Now we can safely delete the teaching assignment
         db.session.delete(assignment)
         db.session.commit()
         
@@ -251,6 +263,26 @@ def get_all_courses(current_user):
             'name': c.name,
             'description': c.description
         } for c in courses]
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# GET a specific course by ID
+@teaching_bp.route('/admin/courses/<int:course_id>', methods=['GET'])
+@admin_required
+def get_course(current_user, course_id):
+    try:
+        course = Course.query.get(course_id)
+        if not course:
+            return jsonify({'error': 'Course not found'}), 404
+            
+        result = {
+            'id': course.id,
+            'code': course.code,
+            'name': course.name,
+            'description': course.description
+        }
         
         return jsonify(result)
     except Exception as e:

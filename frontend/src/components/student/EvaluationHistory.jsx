@@ -4,6 +4,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FaHistory, FaEdit, FaCalendarAlt, FaBook, FaUser, FaStar, FaPencilAlt } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
+import Loading from '../Loading';
+import { DateTime } from 'luxon';
 
 const EvaluationHistory = () => {
   const navigate = useNavigate();
@@ -25,11 +27,9 @@ const EvaluationHistory = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      console.log(token);
       const response = await axios.get(`${apiUrl}/api/student/evaluation-history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log('Evaluation history data:', response.data);
       
       // Check if we received data and process it
       if (response.data && Array.isArray(response.data)) {
@@ -41,7 +41,6 @@ const EvaluationHistory = () => {
         
         // Log whether we're using real or dummy data
         const hasDummyData = sortedData.some(item => item.is_dummy);
-        console.log(hasDummyData ? 'Using dummy data (no real evaluations found)' : 'Using real evaluation data');
       } else {
         setHistory([]);
       }
@@ -64,7 +63,6 @@ const EvaluationHistory = () => {
       const response = await axios.get(`${apiUrl}/api/student/evaluation/${evaluationId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log(response.data)
       setSelectedEvaluation(response.data);
       setEditForm({
         score: response.data.score,
@@ -111,18 +109,26 @@ const EvaluationHistory = () => {
     });
   };
   
-  // Format date
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-  
+  // Format date with WIB timezone (UTC+7)
+// Fungsi untuk memformat tanggal dengan zona waktu WIB (UTC+7)
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+
+  try {
+    // Tangani format tanggal dari database (contoh: "2025-05-19 07:14:29.870937")
+    const isoFormatted = dateString.replace(' ', 'T'); // Jadi: 2025-05-19T07:14:29.870937
+
+    const dt = DateTime.fromISO(isoFormatted, { zone: 'utc' }) // anggap inputnya UTC
+      .setZone('Asia/Jakarta'); // ubah ke WIB
+
+    return dt.setLocale('id').toFormat("d MMMM yyyy 'pukul' HH:mm 'WIB'");
+  } catch (error) {
+    console.error('Luxon format error:', error);
+    return dateString;
+  }
+};
+
   useEffect(() => {
     fetchHistory();
   }, []);
@@ -131,7 +137,6 @@ const EvaluationHistory = () => {
   useEffect(() => {
     // Check if we have a refreshData state from navigation
     if (location.state && location.state.refreshData) {
-      console.log('Refreshing evaluation history data');
       fetchHistory();
     }
   }, [location]);
@@ -159,11 +164,7 @@ const EvaluationHistory = () => {
   if (loading && history.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500"
-        ></motion.div>
+        <Loading />
       </div>
     );
   }
@@ -187,7 +188,7 @@ const EvaluationHistory = () => {
           initial="hidden"
           animate="visible"
         >
-          <div className="bg-green-500 text-white p-4">
+          <div className="bg-gradient-to-r from-gray-800 to-black text-white p-4">
             <h2 className="font-bold text-lg">Daftar Evaluasi</h2>
           </div>
           
@@ -203,7 +204,7 @@ const EvaluationHistory = () => {
                 <motion.div 
                   key={item.id}
                   variants={itemVariants}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedEvaluation && selectedEvaluation.id === item.id ? 'bg-green-50 border-l-4 border-green-500' : ''}`}
+                  className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedEvaluation && selectedEvaluation.id === item.id ? 'bg-gray-100 border-l-4 border-gray-800' : ''}`}
                   onClick={() => {
                     fetchEvaluationDetails(item.id);
                     setIsEditing(false);
@@ -218,7 +219,7 @@ const EvaluationHistory = () => {
                     <div>
                       <h3 className="font-semibold text-gray-800">{item.lecturer_name}</h3>
                       <p className="text-sm text-gray-600 mt-1 flex items-center">
-                        <FaBook className="mr-1 text-green-500" /> {item.course_name}
+                        <FaBook className="mr-1 text-gray-700" /> {item.course_name}
                       </p>
                       <p className="text-xs text-gray-500 mt-1 flex items-center">
                         <FaCalendarAlt className="mr-1 text-gray-400" /> {item.created_at_formatted || formatDate(item.created_at)}
@@ -244,7 +245,7 @@ const EvaluationHistory = () => {
         >
           {selectedEvaluation ? (
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="bg-green-500 text-white p-4 flex justify-between items-center">
+              <div className="bg-gradient-to-r from-gray-800 to-black text-white p-4 flex justify-between items-center">
                 <h2 className="font-bold text-lg">Detail Evaluasi</h2>
                 {!isEditing && (
                   <button 
@@ -304,7 +305,7 @@ const EvaluationHistory = () => {
                         </button>
                         <button 
                           onClick={updateEvaluation}
-                          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                          className="px-4 py-2 bg-gradient-to-r from-gray-800 to-black text-white rounded-md hover:bg-gray-700 transition-colors"
                           disabled={loading}
                         >
                           {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
@@ -321,7 +322,7 @@ const EvaluationHistory = () => {
                       </div>
                       <div className="bg-green-100 px-4 py-2 rounded-lg">
                         <div className="text-sm text-gray-600">Skor</div>
-                        <div className="text-2xl font-bold text-green-600">{selectedEvaluation.score}%</div>
+                        <div className="text-2xl font-bold text-gray-800">{selectedEvaluation.score}%</div>
                       </div>
                     </div>
                     
@@ -373,7 +374,7 @@ const EvaluationHistory = () => {
                             console.error('Missing lecturer_id or class_id for editing', selectedEvaluation);
                           }
                         }}
-                        className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                        className="flex items-center px-4 py-2 bg-gradient-to-r from-gray-800 to-black text-white rounded-md hover:bg-gray-700 transition-colors"
                       >
                         <FaPencilAlt className="mr-2" />
                         Edit Lengkap

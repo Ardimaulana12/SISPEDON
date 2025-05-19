@@ -90,7 +90,8 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
       return (
         student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (student.nim && student.nim.toString().includes(searchTerm)) ||
-        (student.class && student.class.toLowerCase().includes(searchTerm.toLowerCase()))
+        (student.class && student.class.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (student.semester && student.semester.toString().includes(searchTerm))
       );
     })
     .sort((a, b) => {
@@ -109,6 +110,11 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
           (a.class || '').localeCompare(b.class || '') : 
           (b.class || '').localeCompare(a.class || '');
       }
+      if (sortConfig.key === 'semester') {
+        return sortConfig.direction === 'asc' ? 
+          (a.semester || 0) - (b.semester || 0) : 
+          (b.semester || 0) - (a.semester || 0);
+      }
       return 0;
     });
 
@@ -121,25 +127,23 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
     setEditStudentId(null);
     setShowFormModal(true);
   };
+
   const handleEdit = (nim) => {
-    console.log('Edit clicked', nim);
     setEditStudentId(nim);
     setShowFormModal(true);
-    setOpenMenuIndex(null);
   };
+
   const handleFormSuccess = () => {
     setShowFormModal(false);
-    setEditStudentId(null);
     fetchStudents();
   };
+
   const handleDelete = (student) => {
-    console.log('Delete clicked', student);
     setStudentToDelete(student);
     setShowDeleteModal(true);
-    setOpenMenuIndex(null);
   };
+
   const confirmDelete = () => {
-    if (!studentToDelete) return;
     const token = localStorage.getItem('access_token');
     axios.delete(`${apiUrl}/admin/students/${studentToDelete.nim}`, {
       headers: {
@@ -147,21 +151,21 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
       }
     })
       .then(response => {
-        fetchStudents();
-        setError(null);
         toast.success('Student deleted successfully');
-        setShowDeleteModal(false);
-        setStudentToDelete(null);
+        fetchStudents();
       })
       .catch(err => {
         console.error('Error deleting student:', err);
-        setError('Failed to delete student');
         toast.error('Failed to delete student');
+      })
+      .finally(() => {
+        setShowDeleteModal(false);
+        setStudentToDelete(null);
       });
   };
 
   return (
-    <div className="p-6 bg-white shadow-lg rounded-md">
+    <div className="p-4">
       <h2 className="text-2xl font-bold mb-6">Student List</h2>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
         <div className="flex-1">
@@ -187,7 +191,7 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
       )}
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-200 rounded-md">
-        <thead>
+          <thead>
             <tr className="bg-blue-500 text-white">
               <th className="p-3 text-left">No</th>
               <th className="p-3 text-left">
@@ -195,8 +199,7 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
                   onClick={() => handleSort('nim')}
                   className="flex items-center hover:text-gray-200 transition-colors cursor-pointer"
                 >
-                  NIM
-                  {getSortIcon('nim')}
+                  NIM {getSortIcon('nim')}
                 </button>
               </th>
               <th className="p-3 text-left">
@@ -204,8 +207,7 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
                   onClick={() => handleSort('name')}
                   className="flex items-center hover:text-gray-200 transition-colors cursor-pointer"
                 >
-                  Name
-                  {getSortIcon('name')}
+                  Name {getSortIcon('name')}
                 </button>
               </th>
               <th className="p-3 text-left">
@@ -213,11 +215,19 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
                   onClick={() => handleSort('class')}
                   className="flex items-center hover:text-gray-200 transition-colors cursor-pointer"
                 >
-                  Class
-                  {getSortIcon('class')}
+                  Class {getSortIcon('class')}
                 </button>
               </th>
-              <th className="p-3 text-left">Action</th>
+              <th className="p-3 text-left">
+                <button 
+                  onClick={() => handleSort('semester')}
+                  className="flex items-center hover:text-gray-200 transition-colors cursor-pointer"
+                >
+                  Semester {getSortIcon('semester')}
+                </button>
+              </th>
+              <th className="p-3 text-left">Email</th>
+              <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -227,11 +237,12 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
                 <td className="p-3">{student.nim}</td>
                 <td className="p-3">{student.name}</td>
                 <td className="p-3">{student.class || '-'}</td>
+                <td className="p-3">{student.semester || '-'}</td>
+                <td className="p-3">{student.email || '-'}</td>
                 <td className="p-3 text-center relative">
                   <button
                     className="p-1 hover:bg-gray-200 rounded-full cursor-pointer"
                     onClick={() => {
-                      console.log('Three dots clicked', idx);
                       setOpenMenuIndex(openMenuIndex === idx ? null : idx);
                     }}
                     ref={el => menuRefs.current[idx] = el}
@@ -259,10 +270,10 @@ const StudentList = ({ onEdit, refreshTrigger }) => {
                     </div>
                   )}
                 </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 text-sm">
         <div className="mb-2 sm:mb-0 text-gray-600">

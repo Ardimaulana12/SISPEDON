@@ -192,10 +192,15 @@ const LeaderboardTable = () => {
                 </div>
               </th>
               <th className="p-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center cursor-pointer" onClick={() => handleSort('averageScore')}>
                   <span>Skor Rata-rata</span>
+                  <SortButton 
+                    active={sortConfig.key === 'averageScore'} 
+                    direction={sortConfig.direction} 
+                  />
                 </div>
               </th>
+
               <th className="p-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
                 <div className="flex items-center justify-center">
                   <span>Jumlah Voters</span>

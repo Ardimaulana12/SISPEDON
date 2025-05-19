@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
+import Loading from "./Loading";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, role, loading } = useAuth();
@@ -16,7 +17,7 @@ function ProtectedRoute({ children, allowedRoles }) {
     }
   }, [isAuthenticated, role, loading, navigate, allowedRoles]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <div className="flex justify-center items-center h-screen"><Loading /></div>;
   return isAuthenticated ? children : null;
 }
 

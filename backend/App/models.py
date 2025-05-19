@@ -151,55 +151,87 @@ def update_lecturer_score(lecturer_id):
     from sqlalchemy import func
     
     try:
-        # Get all evaluations for this lecturer that have a score
-        evaluations = Evaluation.query.filter(
-            Evaluation.lecturer_id == lecturer_id,
-            Evaluation.score.isnot(None)
-        ).all()
+        # Get all evaluations for this lecturer
+        evaluations = Evaluation.query.filter_by(lecturer_id=lecturer_id).all()
         
-        # Calculate average score from all evaluations
-        if evaluations:
-            # Get the maximum possible points for each question
-            max_point_answer = Answer.query.order_by(Answer.points.desc()).first()
-            max_points_per_question = max_point_answer.points if max_point_answer else 1.0
+        if not evaluations:
+            print(f"No evaluations found for lecturer {lecturer_id}")
+            # If there are no evaluations, set average to 0 but keep existing voter count
+            lecturer_score = LecturerScore.query.get(lecturer_id)
+            if lecturer_score:
+                lecturer_score.average_score = 0
+                db.session.commit()
+                print(f"Reset score to 0 for lecturer {lecturer_id}, keeping voter count at {lecturer_score.score_count}")
+            return True
+        
+        # Calculate total points and total possible points directly from evaluation answers
+        total_points = 0
+        total_possible_points = 0
+        count = len(evaluations)
+        
+        # Get max points per question (usually 5)
+        max_point_answer = Answer.query.order_by(Answer.points.desc()).first()
+        max_points_per_question = max_point_answer.points if max_point_answer else 5.0
+        
+        # Process all evaluation answers to calculate the total score
+        for eval in evaluations:
+            # Get all answers for this evaluation
+            eval_answers = EvaluationAnswer.query.filter_by(evaluation_id=eval.id).all()
             
-            # Calculate total points and total possible points across all evaluations
-            total_points = 0
-            total_possible_points = 0
+            # Calculate points for this evaluation
+            eval_points = 0
+            answer_count = 0
             
-            for eval in evaluations:
-                # Get the evaluation answers
-                eval_answers = EvaluationAnswer.query.filter_by(evaluation_id=eval.id).all()
-                
-                # Calculate points for this evaluation
-                eval_points = 0
-                answer_count = 0
-                
-                for ea in eval_answers:
-                    answer = Answer.query.get(ea.answer_id)
-                    if answer:
-                        eval_points += answer.points
-                        answer_count += 1
-                
-                # Add to totals
-                total_points += eval_points
-                total_possible_points += (answer_count * max_points_per_question)
+            for ea in eval_answers:
+                answer = Answer.query.get(ea.answer_id)
+                if answer:
+                    eval_points += answer.points
+                    answer_count += 1
             
-            # Calculate overall average
-            if total_possible_points > 0:
-                average = (total_points / total_possible_points) * 100
-                # Ensure the average is capped at 100%
-                average = min(average, 100.0)
-            else:
-                average = 0
-            
-            count = len(evaluations)
-            print(f"Calculated average for lecturer {lecturer_id}: {average:.2f}% from {count} evaluations")
-            print(f"Total points: {total_points}, Total possible: {total_possible_points}")
+            # Add to totals
+            total_points += eval_points
+            total_possible_points += (answer_count * max_points_per_question)
+        
+        # Calculate overall average
+        if total_possible_points > 0:
+            average = (total_points / total_possible_points) * 100
+            # Cap at 100% to prevent unrealistic scores
+            average = min(average, 100.0)
         else:
             average = 0
-            count = 0
-            print(f"No evaluations found for lecturer {lecturer_id}")
+        
+        print(f"Calculated average for lecturer {lecturer_id}: {average:.2f}% from {count} evaluations")
+        print(f"Total points: {total_points}, Total possible: {total_possible_points}")
+        
+        # Calculate Bayesian Average
+        # First, get global average (C) from all evaluations
+        global_avg_query = db.session.query(func.avg(Evaluation.score)).scalar()
+        C = global_avg_query if global_avg_query is not None else 0
+        
+        # Get average number of voters per lecturer (m)
+        lecturer_counts = db.session.query(
+            Evaluation.lecturer_id,
+            func.count(Evaluation.id).label('voter_count')
+        ).group_by(Evaluation.lecturer_id).all()
+        
+        total_lecturers_with_evals = len(lecturer_counts)
+        if total_lecturers_with_evals > 0:
+            m = sum(count[1] for count in lecturer_counts) / total_lecturers_with_evals
+        else:
+            m = 0
+        
+        # Calculate weighted score using Bayesian Average formula
+        # weighted_score = (v / (v + m)) * R + (m / (v + m)) * C
+        v = count  # Number of voters for this lecturer
+        R = average  # Average score for this lecturer
+        
+        if v + m > 0:  # Avoid division by zero
+            weighted_score = (v / (v + m)) * R + (m / (v + m)) * C
+        else:
+            weighted_score = 0
+        
+        # print(f"Calculated Bayesian Average for lecturer {lecturer_id}: {weighted_score:.2f}")
+        # print(f"v={v}, m={m}, R={R:.2f}, C={C:.2f}")
         
         # Update or create lecturer score record
         lecturer_score = LecturerScore.query.get(lecturer_id)
@@ -207,21 +239,23 @@ def update_lecturer_score(lecturer_id):
             # Update existing record
             lecturer_score.average_score = average
             lecturer_score.score_count = count
-            print(f"Updated existing score record for lecturer {lecturer_id}")
+            lecturer_score.weighted_score = weighted_score
+            # print(f"Updated score for lecturer {lecturer_id} to {average:.2f}%, weighted score: {weighted_score:.2f}, voter count: {count}")
         else:
             # Create new record
             lecturer_score = LecturerScore(
                 lecturer_id=lecturer_id,
                 average_score=average,
-                score_count=count
+                score_count=count,
+                weighted_score=weighted_score
             )
             db.session.add(lecturer_score)
-            print(f"Created new score record for lecturer {lecturer_id}")
+            print(f"Created new score record for lecturer {lecturer_id} with score {average:.2f}%, weighted score: {weighted_score:.2f}, voter count: {count}")
         
         db.session.commit()
-        print(f"Successfully updated leaderboard for lecturer {lecturer_id}: {average:.2f}% from {count} evaluations")
+        # print(f"Successfully updated leaderboard for lecturer {lecturer_id}: {average:.2f}% from {count} evaluations, weighted score: {weighted_score:.2f}")
         return True
     except Exception as e:
         db.session.rollback()
-        print(f"Error updating lecturer score: {str(e)}")
+        # print(f"Error updating lecturer score: {str(e)}")
         return False

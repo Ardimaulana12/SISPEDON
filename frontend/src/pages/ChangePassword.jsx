@@ -80,11 +80,9 @@ const ChangePassword = () => {
       const token = localStorage.getItem('access_token');
       // Gunakan endpoint profile yang sudah terbukti berfungsi sebagai referensi
       const profileEndpoint = `${apiUrl}/api/profile`;
-      console.log('Profile endpoint reference:', profileEndpoint);
       
       // Gunakan endpoint change-password yang sesuai dengan registrasi blueprint di App/__init__.py
       const changePasswordEndpoint = `${apiUrl}/api/change-password`;
-      console.log('Attempting to change password with endpoint:', changePasswordEndpoint);
       
       const response = await axios.post(
         changePasswordEndpoint,

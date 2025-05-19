@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LeaderboardTable from './LeaderboardTable';
-import { FaTrophy, FaMedal, FaAward, FaChartLine } from 'react-icons/fa';
+import { FaTrophy, FaChartLine } from 'react-icons/fa';
 
 const Leaderboard = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -25,6 +27,7 @@ const Leaderboard = () => {
       transition: { duration: 0.5 }
     }
   };
+  
   // Animated background circles
   const circles = Array(5).fill().map((_, i) => (
     <motion.div
@@ -88,9 +91,12 @@ const Leaderboard = () => {
           transition={{ delay: 0.3, duration: 0.5 }}
         >
           <p className="text-gray-600 max-w-2xl mx-auto bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-            Peringkat dosen berdasarkan skor rata-rata. Gunakan fitur pencarian untuk menemukan dosen tertentu
-            atau urutkan berdasarkan nama, peringkat, atau skor.
+            Peringkat dosen berdasarkan <span className="font-semibold text-green-700">Skor Rata-rata</span>. 
+            Gunakan fitur pencarian untuk menemukan dosen tertentu atau urutkan berdasarkan nama, peringkat, atau skor.
           </p>
+          <div className="mt-2 text-sm text-gray-500 max-w-2xl mx-auto bg-green-50 p-3 rounded-lg border border-green-100">
+            <p><span className="font-semibold">Skor Rata-rata:</span> Nilai murni berdasarkan evaluasi mahasiswa.</p>
+          </div>
         </motion.div>
         
         <div className="flex justify-center mt-6 space-x-4">
@@ -117,7 +123,7 @@ const Leaderboard = () => {
           </motion.div>
         </div>
       </motion.div>
-
+      
       <motion.div variants={itemVariants}>
         <LeaderboardTable />
       </motion.div>

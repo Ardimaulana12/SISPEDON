@@ -8,7 +8,7 @@ export const useLeaderboardData = () => {
   const [error, setError] = useState(null);
   const [sortConfig, setSortConfig] = useState({
     key: 'averageScore',
-    direction: 'desc' // Default sort by highest score
+    direction: 'desc' // Default sort by Average score
   });
   const [previousRanking, setPreviousRanking] = useState({});
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -20,7 +20,6 @@ export const useLeaderboardData = () => {
       const response = await axios.get(`${apiUrl}/lecturers`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log(response.data)
       
       // Process lecturer data to ensure consistent property names
       const lecturersWithScores = response.data.map(lecturer => ({
@@ -93,6 +92,8 @@ export const useLeaderboardData = () => {
         ? a.averageScore - b.averageScore 
         : b.averageScore - a.averageScore;
     }
+    
+    // Weighted score sorting removed
     
     return 0;
   });

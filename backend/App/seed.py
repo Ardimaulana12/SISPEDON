@@ -74,7 +74,7 @@ with app.app_context():
 
     # 10. Lecturer Scores (optional cache)
     for lecturer in [lecturer1, lecturer2]:
-        # Dummy skor rata-rata
+        # Dummy skor rata-rata (hanya average_score, tanpa weighted_score)
         score = LecturerScore(lecturer_id=lecturer.nidn, average_score=random.uniform(10, 20), score_count=2)
         db.session.add(score)
 

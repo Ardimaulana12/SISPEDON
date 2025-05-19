@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { FaInstagram, FaFacebook, FaYoutube, FaTrophy, FaEdit } from 'react-icons/fa';
+import { FaInstagram, FaFacebook, FaYoutube, FaTrophy, FaEdit, FaGraduationCap, FaChalkboardTeacher, FaStar } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 export default function Home() {
@@ -40,7 +40,6 @@ export default function Home() {
         const res = await axios.get(`${apiUrl}/lecturers/all`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log(res.data)
         
         // Add average score if not present
         const lecturersWithScores = res.data.map(lecturer => ({
@@ -77,16 +76,22 @@ export default function Home() {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(lecturer.name)}&background=random`;
   };
 
+  const scrollToLeaderboard = () => {
+    const section = document.getElementById("leaderboard");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   return (
     <motion.div 
-      className="min-h-screen flex flex-col bg-gradient-to-br from-white to-blue-50"
+      className="min-h-screen flex flex-col relative"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header Section */}
       <motion.header 
-        className="py-12 px-4 sm:px-6 lg:px-8 text-center bg-gradient-to-r from-blue-600 to-indigo-800 text-white"
+        className="py-12 px-4 sm:px-6 lg:px-8 text-center text-black relative "
         variants={itemVariants}
       >
         <div className="max-w-4xl mx-auto">
@@ -96,25 +101,37 @@ export default function Home() {
             <span className="block">Seluruh Kinerja</span>
             <span className="block">Dosen Kita</span>
           </h1>
-          <motion.div 
-            className="mt-8 inline-block bg-white text-blue-700 px-8 py-3 rounded-full font-bold text-xl shadow-lg"
+          <p className="text-lg text-gray-900 max-w-2xl mx-auto mt-4">
+            Sistem Penilaian Dosen (SISPEDON) membantu meningkatkan kualitas pengajaran di Universitas Dikte
+          </p>
+          <motion.button
+            onClick={scrollToLeaderboard}
+            className="mt-8 bg-gradient-to-r cursor-pointer from-gray-800 to-black text-white px-8 py-3 rounded-full font-bold text-xl shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             Leaderboard
-          </motion.div>
+          </motion.button>
         </div>
       </motion.header>
 
-      {/* Top 3 Lecturers - Dark Mode Style */}
+      {/* Divider */}
+      <div className="relative z-10">
+        <div className="h-1 bg-gradient-to-r from-gray-700 via-gray-800 to-black max-w-5xl mx-auto"></div>
+      </div>
+      
+      {/* Top 3 Lecturers - Leaderboard Style */}
       <motion.section 
-        className="py-12 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white"
+        className="py-12 px-4 sm:px-6 lg:px-8 relative z-10"
         variants={itemVariants}
       >
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Top Performers</h2>
+          <div className="bg-gradient-to-r from-gray-800 to-black rounded-t-[45px] shadow-lg py-6 px-8">
+            <h2 className="text-3xl font-bold text-center text-white">Top Performers</h2>
+          </div>
+          <div className="bg-gradient-to-r from-gray-800 to-black rounded-b-[45px] shadow-lg py-8 px-6 border border-gray-200 border-t-2">
           
-          <div className="flex flex-wrap justify-center gap-6">
+          <div className="flex flex-wrap justify-center gap-8 mt-4">
             {topLecturers.map((lecturer, index) => {
               const rank = index + 1;
               const trophyColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-gray-300' : 'text-amber-600';
@@ -149,36 +166,50 @@ export default function Home() {
                       />
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold">{lecturer.name}</h3>
+                  <h3 className="text-lg font-bold text-white">{lecturer.name}</h3>
                   <p className={`text-2xl font-bold ${scoreColor}`}>{Math.round(lecturer.averageScore)}%</p>
-                  <p className="text-gray-400 text-sm">@{lecturer.name.toLowerCase().replace(/\s+/g, '')}</p>
+                  <p className="text-white text-sm">@{lecturer.name.toLowerCase().replace(/\s+/g, '')}</p>
                 </motion.div>
               );
             })}
           </div>
+          </div>
         </div>
       </motion.section>
 
+      {/* White Line */}
+      <div className="relative z-10">
+        <div className="h-1 bg-white max-w-5xl mx-auto"></div>
+      </div>
+
+      {/* Divider */}
+      <div className="relative z-10">
+        <div className="h-1 bg-gradient-to-r from-black via-gray-800 to-gray-700 max-w-5xl mx-auto"></div>
+      </div>
+      
       {/* Leaderboard Section */}
       <motion.section 
-        className="py-12 px-4 sm:px-6 lg:px-8 flex-grow"
+        className="py-12 px-4 sm:px-6 lg:px-8 relative z-10"
+        id='leaderboard'
         variants={itemVariants}
       >
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Leaderboard</h2>
-            <Link 
-              to="/leaderboard" 
-              className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
-            >
-              View Full Leaderboard
-            </Link>
+          <div className="bg-gradient-to-r from-gray-800 to-black rounded-t-[45px] shadow-lg py-4 px-8">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Leaderboard</h2>
+              <Link 
+                to="/leaderboard" 
+                className="text-white underline hover:text-gray-300 font-medium flex items-center"
+              >
+                View Full Leaderboard
+              </Link>
+            </div>
           </div>
-          
-          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+          <div className="bg-white rounded-b-xl shadow-lg py-6 px-6 border border-gray-200 border-t-0">
+          <div className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gradient-to-r from-green-100 to-teal-50">
+                <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
                   <tr>
                     <th className="p-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Rank</th>
                     <th className="p-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Dosen</th>
@@ -194,7 +225,7 @@ export default function Home() {
                         : rank === 2 
                           ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-l-4 border-gray-400' 
                           : 'bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-600'
-                      : 'bg-gradient-to-r from-green-50 to-teal-50 hover:from-green-100 hover:to-teal-100';
+                      : 'bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200';
                     
                     return (
                       <motion.tr 
@@ -233,29 +264,31 @@ export default function Home() {
               </table>
             </div>
           </div>
+          </div>
         </div>
       </motion.section>
 
+      
       {/* Footer Section */}
       <motion.footer 
-        className="py-8 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white"
+        className="py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-gray-800 to-black text-white relative z-10"
         variants={itemVariants}
       >
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center mb-4">
-              <FaEdit className="text-blue-400 text-xl mr-2" />
+              <FaEdit className="text-gray-300 text-xl mr-2" />
               <h2 className="text-2xl font-bold">SISPEDON</h2>
             </div>
-            <p className="text-gray-400 mb-6">Sistem Penilaian Dosen</p>
-            <p className="text-gray-300 font-bold mb-8">UNIVERSITAS DIKTE</p>
+            <p className="text-white mb-6">Sistem Penilaian Dosen</p>
+            <p className="text-white font-bold mb-8">UNIVERSITAS DIKTE</p>
             
-            <div className="flex space-x-6">
+            <div className="flex space-x-8">
               <motion.a 
                 href="https://instagram.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-pink-500 transition-colors duration-300"
+                className="text-white hover:text-pink-500 transition-colors duration-300"
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -265,7 +298,7 @@ export default function Home() {
                 href="https://facebook.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-500 transition-colors duration-300"
+                className="text-white hover:text-gray-300 transition-colors duration-300"
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -275,7 +308,7 @@ export default function Home() {
                 href="https://youtube.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-red-500 transition-colors duration-300"
+                className="text-white hover:text-red-500 transition-colors duration-300"
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}
               >

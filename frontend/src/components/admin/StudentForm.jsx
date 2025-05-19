@@ -12,11 +12,30 @@ const StudentForm = ({ studentId, onSuccess }) => {
     classId: ''
   });
 
+  const [classes, setClasses] = useState([]);
   const [newStudent, setNewStudent] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const apiUrl = import.meta.env.VITE_API_URL; 
 
+  // Fetch all classes for dropdown
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    axios.get(`${apiUrl}/admin/classes-dropdown`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(response => {
+        setClasses(response.data);
+      })
+      .catch(err => {
+        console.error('Error fetching classes:', err);
+        toast.error('Failed to fetch classes');
+      });
+  }, []);
+
+  // Fetch student data if editing
   useEffect(() => {
     if (studentId) {
       setIsLoading(true);
@@ -83,9 +102,9 @@ const StudentForm = ({ studentId, onSuccess }) => {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    // Validate class ID (must be numeric)
-    if (!/^\d+$/.test(studentData.classId)) {
-      newErrors.classId = 'Class ID must contain only numbers';
+    // Validate class selection
+    if (!studentData.classId) {
+      newErrors.classId = 'Please select a class';
     }
 
     // Validate password (minimum 6 characters)
@@ -197,7 +216,7 @@ const StudentForm = ({ studentId, onSuccess }) => {
             onChange={handleInputChange}
             required
             disabled={isLoading}
-            className={`w-full p-2 border ${errors.nim ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-blue-500 rounded-md disabled:bg-gray-100`}
+            className={`w-full p-2 border ${errors.nim ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-gray-700 rounded-md disabled:bg-gray-100`}
           />
           {errors.nim && <p className="text-red-500 text-sm mt-1">{errors.nim}</p>}
         </div>
@@ -211,7 +230,7 @@ const StudentForm = ({ studentId, onSuccess }) => {
             onChange={handleInputChange}
             required
             disabled={isLoading}
-            className={`w-full p-2 border ${errors.name ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-blue-500 rounded-md disabled:bg-gray-100`}
+            className={`w-full p-2 border ${errors.name ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-gray-700 rounded-md disabled:bg-gray-100`}
           />
           {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
         </div>
@@ -225,7 +244,7 @@ const StudentForm = ({ studentId, onSuccess }) => {
             onChange={handleInputChange}
             required
             disabled={isLoading}
-            className={`w-full p-2 border ${errors.email ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-blue-500 rounded-md disabled:bg-gray-100`}
+            className={`w-full p-2 border ${errors.email ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-gray-700 rounded-md disabled:bg-gray-100`}
           />
           {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
@@ -239,29 +258,35 @@ const StudentForm = ({ studentId, onSuccess }) => {
             onChange={handleInputChange}
             required={!studentId}
             disabled={isLoading}
-            className={`w-full p-2 border ${errors.password ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-blue-500 rounded-md disabled:bg-gray-100`}
+            className={`w-full p-2 border ${errors.password ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-gray-700 rounded-md disabled:bg-gray-100`}
           />
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium">Class ID</label>
-          <input
-            type="text"
+          <label className="block text-sm font-medium">Class</label>
+          <select
             name="classId"
             value={studentData.classId}
             onChange={handleInputChange}
             required
             disabled={isLoading}
-            className={`w-full p-2 border ${errors.classId ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-blue-500 rounded-md disabled:bg-gray-100`}
-          />
+            className={`w-full p-2 border ${errors.classId ? 'border-red-500' : 'border-black'} focus:ring-2 focus:ring-gray-700 rounded-md disabled:bg-gray-100`}
+          >
+            <option value="">Select a class</option>
+            {classes.map(classItem => (
+              <option key={classItem.id} value={classItem.id}>
+                {classItem.display_name}
+              </option>
+            ))}
+          </select>
           {errors.classId && <p className="text-red-500 text-sm mt-1">{errors.classId}</p>}
         </div>
 
         <button 
           type="submit" 
           disabled={isLoading}
-          className="w-full p-2 cursor-pointer bg-blue-500 text-white rounded-md disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
+          className="w-full p-2 cursor-pointer bg-gradient-to-r from-gray-800 to-black text-white rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isLoading ? (
             <>
@@ -278,12 +303,14 @@ const StudentForm = ({ studentId, onSuccess }) => {
       </form>
 
       {newStudent && (
-        <div className="mt-4 p-4 border border-green-500 rounded-md">
+        <div className="mt-4 p-4 border border-gray-700 rounded-md">
           <h3 className="text-lg font-semibold">Student {studentId ? 'Updated' : 'Added'} Successfully</h3>
           <p><strong>NIM:</strong> {studentData.nim}</p>
           <p><strong>Name:</strong> {studentData.name}</p>
           <p><strong>Email:</strong> {studentData.email}</p>
-          <p><strong>Class ID:</strong> {studentData.classId}</p>
+          <p><strong>Class:</strong> {
+            classes.find(c => c.id === parseInt(studentData.classId))?.display_name || studentData.classId
+          }</p>
         </div>
       )}
     </div>
