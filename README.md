@@ -68,6 +68,7 @@ docker compose -f docker-compose/compose.stag.yaml up -d
 
 - If port `5173`, `5000`, or `8080` is already in use, make sure to free them or change the ports in the Docker Compose file.
 - Make sure your `.env` or config files are correctly set up if required.
+- Username and Password for admin and student at PDF file.
 
 ---
 
