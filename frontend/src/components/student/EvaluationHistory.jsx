@@ -109,18 +109,15 @@ const EvaluationHistory = () => {
     });
   };
   
-  // Format date with WIB timezone (UTC+7)
 // Fungsi untuk memformat tanggal dengan zona waktu WIB (UTC+7)
+
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
 
   try {
-    // Tangani format tanggal dari database (contoh: "2025-05-19 07:14:29.870937")
-    const isoFormatted = dateString.replace(' ', 'T'); // Jadi: 2025-05-19T07:14:29.870937
-
-    const dt = DateTime.fromISO(isoFormatted, { zone: 'utc' }) // anggap inputnya UTC
-      .setZone('Asia/Jakarta'); // ubah ke WIB
+    // Contoh: 2025-05-20T13:09:28.996942
+    const dt = DateTime.fromISO(dateString, { zone: 'Asia/Jakarta' });
 
     return dt.setLocale('id').toFormat("d MMMM yyyy 'pukul' HH:mm 'WIB'");
   } catch (error) {
@@ -128,7 +125,6 @@ const formatDate = (dateString) => {
     return dateString;
   }
 };
-
   useEffect(() => {
     fetchHistory();
   }, []);
@@ -227,7 +223,7 @@ const formatDate = (dateString) => {
                     </div>
                     <div className="flex items-center bg-green-100 px-2 py-1 rounded-full">
                       <FaStar className="text-yellow-500 mr-1" />
-                      <span className="text-sm font-medium">{item.score}%</span>
+                      <span className="text-sm font-medium">{Math.round(item.score)}%</span>
                     </div>
                   </div>
                 </motion.div>
@@ -279,7 +275,7 @@ const formatDate = (dateString) => {
                         />
                         <div className="flex justify-between mt-2">
                           <span className="text-sm text-gray-500">0%</span>
-                          <span className="text-lg font-bold text-green-500">{editForm.score}%</span>
+                          <span className="text-lg font-bold text-green-500">{Math.round(editForm.score)}%</span>
                           <span className="text-sm text-gray-500">100%</span>
                         </div>
                       </div>
@@ -322,7 +318,7 @@ const formatDate = (dateString) => {
                       </div>
                       <div className="bg-green-100 px-4 py-2 rounded-lg">
                         <div className="text-sm text-gray-600">Skor</div>
-                        <div className="text-2xl font-bold text-gray-800">{selectedEvaluation.score}%</div>
+                        <div className="text-2xl font-bold text-gray-800">{Math.round(selectedEvaluation.score)}%</div>
                       </div>
                     </div>
                     
@@ -338,11 +334,14 @@ const formatDate = (dateString) => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Dibuat Pada</p>
-                          <p className="font-medium">{selectedEvaluation.created_at_formatted || formatDate(selectedEvaluation.created_at)}</p>
+                          {console.log('[Component] Raw created_at:', selectedEvaluation.created_at)}
+                          {console.log('[Component] Raw created_at_formated:', selectedEvaluation.created_at_formatted)}
+                          <p className="font-medium">{formatDate(selectedEvaluation.created_at)}</p>
                         </div>
                         {selectedEvaluation.updated_at && (
                           <div>
                             <p className="text-sm text-gray-500">Diperbarui Pada</p>
+                            {console.log('[Component] Raw created_at:', selectedEvaluation.updated_at)}
                             <p className="font-medium">{selectedEvaluation.updated_at_formatted || formatDate(selectedEvaluation.updated_at)}</p>
                           </div>
                         )}

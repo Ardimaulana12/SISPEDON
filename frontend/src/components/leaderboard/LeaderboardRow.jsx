@@ -32,9 +32,22 @@ const LeaderboardRow = ({ lecturer, rank, positionChange }) => {
   };
   // Default image if none provided
   const apiUrl = import.meta.env.VITE_API_URL;
+  
+  // Function to extract proper initials from lecturer name
+  const getInitials = (name) => {
+    // Split name by space
+    const nameParts = name.trim().split(' ');
+
+    // Ambil dua bagian pertama yang bukan gelar
+    const filteredParts = nameParts.filter(part => !part.match(/^(Dr\.?|Prof\.?|M\.Kom\.?|M\.T\.?|M\.Sc\.?|M\.Eng\.?|Ph\.D\.?|S\.Pd\.?|S\.Kom\.?|S\.T\.?)$/i));
+
+    // Ambil maksimal 2 inisial pertama
+    return filteredParts.slice(0, 2).map(part => part[0].toUpperCase()).join('');
+  };
+  
   const imageUrl = lecturer.photo_url && lecturer.photo_url !== '/uploads/lecturers/'
     ? `${apiUrl}${lecturer.photo_url}`
-    : `https://ui-avatars.com/api/?name=${encodeURIComponent(lecturer.name)}&background=random`;
+    : `https://ui-avatars.com/api/?name=${getInitials(lecturer.name)}&background=random`;
   
   // Animation variants for row
   const rowVariants = {
@@ -112,7 +125,7 @@ const LeaderboardRow = ({ lecturer, rank, positionChange }) => {
               alt=""
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(lecturer.name)}&background=random`;
+                e.target.src = `https://ui-avatars.com/api/?name=${getInitials(lecturer.name)}&background=random`;
               }}
             />
           </div>

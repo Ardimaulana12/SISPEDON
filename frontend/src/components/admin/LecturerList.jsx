@@ -119,7 +119,17 @@ const LecturerList = () => {
   const totalEntries = filteredLecturers.length;
   const totalPages = Math.ceil(totalEntries / pageSize);
   const paginatedLecturers = filteredLecturers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Function to extract proper initials from lecturer name
+  const getInitials = (name) => {
+    // Split name by space
+    const nameParts = name.trim().split(' ');
 
+    // Ambil dua bagian pertama yang bukan gelar
+    const filteredParts = nameParts.filter(part => !part.match(/^(Dr\.?|Prof\.?|M\.Kom\.?|M\.T\.?|M\.Sc\.?|M\.Eng\.?|Ph\.D\.?|S\.Pd\.?|S\.Kom\.?|S\.T\.?)$/i));
+
+    // Ambil maksimal 2 inisial pertama
+    return filteredParts.slice(0, 2).map(part => part[0].toUpperCase()).join('');
+  };
   const handleClickOutside = (e) => {
     if (!e.target.closest('.dropdown-menu')) {
       setOpenMenuIndex(null);
@@ -213,10 +223,11 @@ const LecturerList = () => {
                     {lecturer.photo_url ? (
                       <img
                         src={`${apiUrl}${lecturer.photo_url}`}
-                        alt={lecturer.name}
+                        alt=""
                         className="w-full h-full object-cover"
-                        // onError={e => { e.target.onerror = null; e.target.src = '/default-avatar.png'; }}
-                      />
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${getInitials(lecturer.name)}&background=random`;
+                        }}                      />
                     ) : (
                       <FaUserTie className="text-gray-400 text-xl" />
                     )}

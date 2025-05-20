@@ -27,7 +27,17 @@ const SelectLecturer = () => {
     };
     fetchLecturers();
   }, []);
-
+    // Function to extract proper initials from lecturer name
+    const getInitials = (name) => {
+      // Split name by space
+      const nameParts = name.trim().split(' ');
+  
+      // Ambil dua bagian pertama yang bukan gelar
+      const filteredParts = nameParts.filter(part => !part.match(/^(Dr\.?|Prof\.?|M\.Kom\.?|M\.T\.?|M\.Sc\.?|M\.Eng\.?|Ph\.D\.?|S\.Pd\.?|S\.Kom\.?|S\.T\.?)$/i));
+  
+      // Ambil maksimal 2 inisial pertama
+      return filteredParts.slice(0, 2).map(part => part[0].toUpperCase()).join('');
+    };
   const handleSelect = (lecturer) => {
     setSelectedLecturer(lecturer);
     setShowModal(true);
@@ -70,8 +80,8 @@ const SelectLecturer = () => {
             >
               <div className="aspect-w-1 aspect-h-1">
                 <img
-                  src={lecturer.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(lecturer.name)}&background=random`}
-                  alt={lecturer.name}
+                  src={lecturer.photo_url || `https://ui-avatars.com/api/?name=${getInitials(lecturer.name)}&background=random`}
+                  alt=""
                   className="w-full h-64 object-cover"
                 />
               </div>

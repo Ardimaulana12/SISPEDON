@@ -82,8 +82,8 @@ export const filterByPeriod = (data, period) => {
  * @returns {Array} - Formatted data for export
  */
 export const formatLeaderboardForExport = (lecturers) => {
-  return lecturers.map((lecturer, index) => ({
-    Peringkat: index + 1,
+  return lecturers.map((lecturer) => ({
+    Peringkat: lecturer.rank,
     NIDN: lecturer.nidn,
     'Nama Dosen': lecturer.name,
     'Skor Rata-rata': lecturer.averageScore !== null ? `${Math.round(lecturer.averageScore)}%` : 'Belum ada skor',

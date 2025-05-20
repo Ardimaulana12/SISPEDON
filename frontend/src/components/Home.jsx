@@ -68,12 +68,24 @@ export default function Home() {
     return sortOrder === 'desc' ? scoreB - scoreA : scoreA - scoreB;
   });
   
+  // Function to extract proper initials from lecturer name
+  const getInitials = (name) => {
+    // Split name by space
+    const nameParts = name.trim().split(' ');
+
+    // Ambil dua bagian pertama yang bukan gelar
+    const filteredParts = nameParts.filter(part => !part.match(/^(Dr\.?|Prof\.?|M\.Kom\.?|M\.T\.?|M\.Sc\.?|M\.Eng\.?|Ph\.D\.?|S\.Pd\.?|S\.Kom\.?|S\.T\.?)$/i));
+
+    // Ambil maksimal 2 inisial pertama
+    return filteredParts.slice(0, 2).map(part => part[0].toUpperCase()).join('');
+  };
+  
   // Get lecturer image URL
   const getLecturerImage = (lecturer) => {
     if (lecturer.photo_url && lecturer.photo_url !== '/uploads/lecturers/') {
       return `${apiUrl}${lecturer.photo_url}`;
     }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(lecturer.name)}&background=random`;
+    return `https://ui-avatars.com/api/?name=${getInitials(lecturer.name)}&background=random`;
   };
 
   const scrollToLeaderboard = () => {
@@ -161,8 +173,11 @@ export default function Home() {
                     <div className={`${size} rounded-full overflow-hidden border-4 ${rank === 1 ? 'border-yellow-400' : rank === 2 ? 'border-gray-300' : 'border-amber-600'} bg-gradient-to-b ${bgColor}`}>
                       <img 
                         src={getLecturerImage(lecturer)} 
-                        alt={lecturer.name}
+                        alt=""
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${getInitials(lecturer.name)}&background=random`;
+                        }}
                       />
                     </div>
                   </div>
@@ -249,6 +264,9 @@ export default function Home() {
                                 src={getLecturerImage(lecturer)} 
                                 alt=""
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.src = `https://ui-avatars.com/api/?name=${getInitials(lecturer.name)}&background=random`;
+                                }}
                               />
                             </div>
                             <span className={`${rank <= 3 ? 'font-semibold' : 'font-medium'}`}>{lecturer.name}</span>

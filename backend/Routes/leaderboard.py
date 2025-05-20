@@ -1,7 +1,7 @@
 from flask_jwt_extended import jwt_required, get_jwt
 from flask import Blueprint, jsonify, request
 from App.models import Lecturer, LecturerScore, Evaluation, db
-from sqlalchemy import desc, func, case, literal
+from sqlalchemy import desc, func, case, literal, or_
 from datetime import datetime, timedelta
 
 leaderboard_bp = Blueprint('leaderboard', __name__)
@@ -14,8 +14,8 @@ def export_leaderboard():
     claims = get_jwt()
     role = claims.get("role")
 
-    # Hanya admin yang boleh mengakses fitur ini
-    if role != 'admin':
+    # Akses untuk admin dan student
+    if role not in ['admin', 'student']:
         return jsonify({'message': 'Unauthorized'}), 403
     
     # Mendapatkan parameter filter dari query string
@@ -100,23 +100,49 @@ def export_leaderboard():
                 score_subquery.c.score_count
             )
         else:
-            # Jika period adalah 'all' atau tidak valid, gunakan data keseluruhan
-            query = query.outerjoin(LecturerScore, Lecturer.nidn == LecturerScore.lecturer_id)
+            # Jika period adalah 'all' atau tidak valid, gunakan data keseluruhan dari LecturerScore
+            score_subquery = db.session.query(
+                Evaluation.lecturer_id,
+                func.avg(Evaluation.score).label('average_score'),
+                func.count(Evaluation.id).label('score_count')
+            ).group_by(Evaluation.lecturer_id).subquery()
+            
+            # Join dengan subquery
+            query = query.outerjoin(score_subquery, Lecturer.nidn == score_subquery.c.lecturer_id)
+            
+            # Select fields dari subquery
             query = query.add_columns(
-                LecturerScore.average_score,
-                LecturerScore.score_count
+                score_subquery.c.average_score,
+                score_subquery.c.score_count
             )
     
-    # Urutkan berdasarkan average_score
+    # Pastikan hanya mengambil dosen yang memiliki evaluasi
+    query = query.filter(or_(score_subquery.c.average_score != None, LecturerScore.average_score != None))
+    
+    # Urutkan berdasarkan average_score (descending)
     lecturers = query.order_by(desc('average_score')).all()
     
     # Format hasil
-    result = [{
-        'nidn': l.nidn,
-        'name': l.name,
-        'photo_url': l.photo_url if hasattr(l, 'photo_url') else None,
-        'average_score': round(l.average_score, 2) if hasattr(l, 'average_score') and l.average_score is not None else None,
-        'voters_count': l.score_count if hasattr(l, 'score_count') and l.score_count is not None else 0
-    } for l in lecturers]
+    result = []
+    for i, l in enumerate(lecturers):
+        lecturer_data = {
+            'nidn': l.nidn,
+            'name': l.name,
+            'photo_url': l.photo_url if hasattr(l, 'photo_url') else None,
+            'rank': i + 1  # Tambahkan peringkat
+        }
+        
+        # Tambahkan skor dan jumlah voter
+        if hasattr(l, 'average_score') and l.average_score is not None:
+            lecturer_data['averageScore'] = round(l.average_score, 2)
+        else:
+            lecturer_data['averageScore'] = None
+            
+        if hasattr(l, 'score_count') and l.score_count is not None:
+            lecturer_data['votersCount'] = l.score_count
+        else:
+            lecturer_data['votersCount'] = 0
+            
+        result.append(lecturer_data)
     
     return jsonify(result)
