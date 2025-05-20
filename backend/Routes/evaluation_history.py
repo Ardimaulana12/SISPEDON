@@ -253,13 +253,31 @@ def get_evaluation_detail(evaluation_id):
         # Get lecturer and course directly from relationships if available
         lecturer = Lecturer.query.get(eval_obj.lecturer_id) if eval_obj.lecturer_id else None
         course = Course.query.get(eval_obj.course_id) if eval_obj.course_id else None
-        
-        # Format dates for both raw (ISO) and display formats
-        created_at_raw = eval_obj.created_at.isoformat() if eval_obj.created_at else None
-        updated_at_raw = eval_obj.updated_at.isoformat() if eval_obj.updated_at else None
-        created_at_formatted = eval_obj.created_at.strftime('%d %B %Y pukul %H:%M WIB') if eval_obj.created_at else None
-        updated_at_formatted = eval_obj.updated_at.strftime('%d %B %Y pukul %H:%M WIB') if eval_obj.updated_at else None
-        
+        from datetime import timezone
+        import pytz
+
+        wib = pytz.timezone('Asia/Jakarta')
+
+        def to_wib(dt):
+            if dt is None:
+                return None
+
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)  # anggap ini UTC
+
+            return dt.astimezone(wib)
+
+        # Konversi dulu
+        created_at_wib = to_wib(eval_obj.created_at)
+        updated_at_wib = to_wib(eval_obj.updated_at)
+
+        # Baru format ke string
+        created_at_raw = created_at_wib.isoformat() if created_at_wib else None
+        updated_at_raw = updated_at_wib.isoformat() if updated_at_wib else None
+
+        created_at_formatted = created_at_wib.strftime('%d %B %Y pukul %H:%M WIB') if created_at_wib else None
+        updated_at_formatted = updated_at_wib.strftime('%d %B %Y pukul %H:%M WIB') if updated_at_wib else None
+
         result = {
             'id': eval_obj.id,
             'lecturer_name': lecturer.name if lecturer else (lecturer_name if lecturer_name else "Unknown Lecturer"),
