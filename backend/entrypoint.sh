@@ -6,6 +6,13 @@ while ! nc -z postgres 5432; do
 done
 echo "✅ PostgreSQL tersedia!"
 
+# Inisialisasi folder migrations jika belum ada
+if [ ! -d "backend/migrations" ]; then
+  echo "📁 Folder migrations tidak ditemukan, inisialisasi dengan 'flask db init'..."
+  flask db init
+  flask db migrate -m "Initial migration"
+fi
+
 echo "📦 Migrasi database..."
 flask db upgrade
 
